@@ -1,7 +1,10 @@
 package com.entropicbox.mockdi4j.util;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +27,7 @@ public class ReflectionsUtilsTest {
 		try 
 		{
 			ReflectionUtils.getBasePackage("com.doesnotexist");
-			fail("Exception should have been thrown");
+			fail();
 		}
 		catch(PackageNotFoundException e)
 		{}
@@ -36,7 +39,7 @@ public class ReflectionsUtilsTest {
 		try
 		{
 			ReflectionUtils.getBasePackage(null);
-			fail("Exception should have been thrown");
+			fail();
 		}
 		catch(NullPointerException e)
 		{}
@@ -48,4 +51,25 @@ public class ReflectionsUtilsTest {
 		Package basePackage = ReflectionUtils.getBasePackage("com.entropicbox.mockdi4j");
 		assertNotNull(basePackage);
 	}
+	
+	@Test
+	public void getDescendentsFrom_null()
+	{
+		try
+		{
+			ReflectionUtils.getDescendentsFrom(null);
+			fail();
+		}
+		catch(NullPointerException e)
+		{}
+	}
+	
+	@Test
+	public void getDescendentsFrom_basePackage()
+	{
+		Package basePackage = ReflectionUtils.getBasePackage("com.entropicbox.mockdi4j");
+		List<Package> descendents = ReflectionUtils.getDescendentsFrom(basePackage);
+		assertTrue("At least 2 packages expected", descendents.size() > 1);
+	}
+		
 }
