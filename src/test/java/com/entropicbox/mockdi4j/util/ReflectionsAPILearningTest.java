@@ -58,7 +58,7 @@ public class ReflectionsAPILearningTest {
 					ClasspathHelper.forClassLoader(
 						classLoadersList.toArray(new ClassLoader[0])))
 				.filterInputsBy(
-					new FilterBuilder().include(
+					new FilterBuilder().include(//	Can also exclude here
 						FilterBuilder.prefix("com.entropicbox.mockdi4j"))));
 
 		Set<Class<?>> classes = reflections.getSubTypesOf(Object.class);
