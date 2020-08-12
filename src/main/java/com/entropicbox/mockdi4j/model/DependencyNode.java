@@ -10,7 +10,7 @@ public class DependencyNode {
 	
 	public DependencyNode(Class<?> dependencyClass) {
 		if (dependencyClass == null)
-			throw new NullPointerException();
+			throw null;
 		
 		this.dependencyClass = dependencyClass;	
 		
@@ -23,7 +23,7 @@ public class DependencyNode {
 
 	public void addChild(DependencyNode child) {
 		if (child == null)
-			throw new NullPointerException();
+			throw null;
 		
 		children.add(child);
 	}
