@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import com.entropicbox.mockdi4j.exception.DependencyNotFoundException;
+import com.entropicbox.mockdi4j.exception.UnsatisfiedDependencyException;
 import com.entropicbox.mockdi4j.exception.WireDependencyException;
 import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.DependsOnSomeAbstractClass;
 import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.SomeAbstractClass;
@@ -75,7 +76,7 @@ public class DependencyMapTest {
 		try {
 			unsatisfiedDMap.wire();
 			fail();
-		} catch (WireDependencyException e) {
+		} catch (UnsatisfiedDependencyException e) {
 		}
 	}
 

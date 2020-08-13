@@ -184,4 +184,5 @@ public class ReflectionsUtilsTest {
 	{
 		assertFalse(ReflectionsUtils.isInstantiable(ITestMockDao.class));
 	}
+	
 }

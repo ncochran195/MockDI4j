@@ -43,8 +43,10 @@ public class DependencyMap {
 	}
 
 	private void wireNotWiredNode(DependencyNode node) {
+		Constructor<?> maxArgsConstructor = ReflectionsUtils.getMaxArgsConstructor(node.getDependencyClass());
+
 		// Found a leaf, termination case
-		if (node.children().isEmpty()) {
+		if (maxArgsConstructor.getParameterCount() == 0) {
 			wireLeafInstance(node);
 			return;
 		}
@@ -55,16 +57,15 @@ public class DependencyMap {
 		}
 
 		// non-leaf instance
-		wireNonLeafInstance(node);
+		wireNonLeafInstance(node, maxArgsConstructor);
 	}
 
 	private void wireLeafInstance(DependencyNode node) {
 		instanceMap.put(node.getDependencyClass(), ReflectionsUtils.newLeafInstance(node.getDependencyClass()));
 	}
 
-	private void wireNonLeafInstance(DependencyNode node) {
+	private void wireNonLeafInstance(DependencyNode node, Constructor<?> constructor) {
 		// Get max args constructor
-		Constructor<?> constructor = ReflectionsUtils.getMaxArgsConstructor(node.getDependencyClass());
 		Object[] paramsInstances = getWiredParamsFromInstanceMap(constructor);
 
 		try {
@@ -81,14 +82,17 @@ public class DependencyMap {
 
 	private Object[] getWiredParamsFromInstanceMap(Constructor<?> constructor) {
 		Object[] paramsInstances = new Object[constructor.getParameterCount()];
-		
+
 		for (int i = 0; i < constructor.getParameterCount(); i++) {
-			Object childInstance = get(constructor.getParameterTypes()[i]);
-			if (childInstance == null)
+			try {
+				Object childInstance = get(constructor.getParameterTypes()[i]);
+				paramsInstances[i] = childInstance;
+			} catch (DependencyNotFoundException e) {
 				throw new UnsatisfiedDependencyException();
-			paramsInstances[i] = childInstance;
+
+			}
 		}
-		
+
 		return paramsInstances;
 	}
 
