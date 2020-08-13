@@ -16,12 +16,14 @@ import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.DependsOnSome
 import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.SomeAbstractClass;
 import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.ITestMockDao;
 import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockController;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockDaoImpl;
 import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockService;
 import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.LeafA;
 import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.LeafB;
 import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.MiddleA;
 import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.MiddleB;
 import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.RootAB;
+import com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph.UnsatisfiedDependencyClass;
 
 public class MockDiTest {
 
@@ -154,6 +156,97 @@ public class MockDiTest {
 		} catch (DependencyNotFoundException e) {
 
 		}
+	}
+
+	@Test
+	public void testWith_null() {
+		try {
+			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").with(null).wire();
+		} catch (NullPointerException e) {
+		}
+	}
+
+	@Test
+	public void testWith_class() {
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph")
+				.with(TestMockDaoImpl.class).wire();
+
+		UnsatisfiedDependencyClass newlySatisfiedDependency = mock.get(UnsatisfiedDependencyClass.class);
+		assertNotNull(newlySatisfiedDependency);
+	}
+
+	@Test
+	public void testWithout_null() {
+		try {
+			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").without(null).wire();
+		} catch (NullPointerException e) {
+		}
+	}
+
+	@Test
+	public void testWithout_class() {
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.model.test.triangular_dependency_graph")
+				.without(MiddleA.class).without(LeafA.class).without(RootAB.class).wire();
+
+		LeafB leafB = mock.get(LeafB.class);
+		MiddleB middleB = mock.get(MiddleB.class);
+
+		assertNotNull(leafB);
+		assertNotNull(middleB);
+
+		try {
+			mock.get(MiddleA.class);
+			fail();
+		} catch (DependencyNotFoundException e) {
+
+		}
+
+		try {
+			mock.get(LeafA.class);
+			fail();
+		} catch (DependencyNotFoundException e) {
+
+		}
+
+		try {
+			mock.get(RootAB.class);
+			fail();
+		} catch (DependencyNotFoundException e) {
+
+		}
+	}
+
+	@Test
+	public void testReplace_nulls() {
+		try {
+			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").replace(null, LeafA.class)
+					.wire();
+		} catch (NullPointerException e) {
+		}
+
+		try {
+			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").replace(LeafA.class, null)
+					.wire();
+		} catch (NullPointerException e) {
+		}
+
+	}
+
+	@Test
+	public void testReplace_classes() {
+		MockDI mock = 
+				MockDI.of("com.entropicbox.mockdi4j.model.test.simple_dependency_graph").
+				replace(DependsOnSomeAbstractClass.class, LeafA.class).wire();
+
+		try {
+			mock.get(DependsOnSomeAbstractClass.class);
+			fail();
+		} catch (DependencyNotFoundException e) {
+
+		}
+
+		assertNotNull(mock.get(LeafA.class));
+		assertNotNull(mock.get(SomeAbstractClass.class));
 	}
 
 }
