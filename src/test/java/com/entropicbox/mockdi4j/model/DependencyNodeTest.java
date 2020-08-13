@@ -6,8 +6,8 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-import com.entropicbox.mockdi4j.model.DependencyTreeTest.DependsOnSomeAbstractClass;
-import com.entropicbox.mockdi4j.model.DependencyTreeTest.ITestMockDao;
+import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.DependsOnSomeAbstractClass;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.ITestMockDao;
 
 public class DependencyNodeTest {
 

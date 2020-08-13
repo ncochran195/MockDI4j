@@ -10,8 +10,24 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.entropicbox.mockdi4j.exception.CircularDependencyException;
+import com.entropicbox.mockdi4j.exception.DuplicateDependencyException;
+import com.entropicbox.mockdi4j.model.test.deep_circular_dependency_graph.CircularDependencyX;
+import com.entropicbox.mockdi4j.model.test.deep_circular_dependency_graph.CircularDependencyY;
+import com.entropicbox.mockdi4j.model.test.deep_circular_dependency_graph.CircularDependencyZ;
+import com.entropicbox.mockdi4j.model.test.shallow_circular_dependency_graph.CircularDependencyA;
+import com.entropicbox.mockdi4j.model.test.shallow_circular_dependency_graph.CircularDependencyB;
+import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.DependsOnSomeAbstractClass;
+import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.SomeAbstractClassImpl;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.ITestMockDao;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockController;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockDaoImpl;
+import com.entropicbox.mockdi4j.model.test.three_level_dependency_graph.TestMockService;
+import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.LeafA;
+import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.LeafB;
+import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.MiddleA;
+import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.MiddleB;
+import com.entropicbox.mockdi4j.model.test.triangular_dependency_graph.RootAB;
 
 public class DependencyTreeTest {
 
@@ -45,7 +61,7 @@ public class DependencyTreeTest {
 	@Test
 	public void testNewDependencyTree_oneElement() {
 		Set<Class<?>> singleDependencySet = new HashSet<>();
-		singleDependencySet.add(SomeAbstractClass.class);
+		singleDependencySet.add(SomeAbstractClassImpl.class);
 
 		DependencyTree singleDTree = new DependencyTree(singleDependencySet);
 
@@ -55,7 +71,8 @@ public class DependencyTreeTest {
 
 		assertEquals("There should only be one root", 1, singleDTree.roots().size());
 
-		assertEquals("The one root's node should match the single dependency", SomeAbstractClass.class,
+		assertEquals("The one root's node should match the single dependency", 
+				SomeAbstractClassImpl.class,
 				singleDTree.roots().iterator().next().getDependencyClass());
 	}
 
@@ -67,24 +84,45 @@ public class DependencyTreeTest {
 		} catch (NullPointerException e) {
 		}
 	}
+	
+	@Test
+	public void testAdd_duplicateDependencies() {
+		DependencyTree duplicateDTree = new DependencyTree();
+		duplicateDTree.add(SomeAbstractClassImpl.class);
+		try {
+			duplicateDTree.add(SomeAbstractClassImpl.class);
+			fail();
+		} catch (DuplicateDependencyException e) {
+		}
+	}
+
+	@Test
+	public void testAdd_interface() {
+		DependencyTree singleDTree = new DependencyTree();
+		singleDTree.add(ITestMockDao.class);
+
+		assertEquals("The element should have not been added to the tree", 
+				0, singleDTree.size());
+	}
 
 	@Test
 	public void testAdd_oneElement() {
 		DependencyTree singleDTree = new DependencyTree();
-		singleDTree.add(SomeAbstractClass.class);
+		singleDTree.add(SomeAbstractClassImpl.class);
 
 		assertEquals("There should be one element in the tree", 1, singleDTree.size());
 
 		assertEquals("There should only be one root", 1, singleDTree.roots().size());
 
-		assertEquals("The one root's node should match the single dependency", SomeAbstractClass.class,
+		assertEquals("The one root's node should match the single dependency", 
+				SomeAbstractClassImpl.class,
 				singleDTree.roots().iterator().next().getDependencyClass());
 	}
 
 	@Test
 	public void testAdd_siblingElements() {
 		DependencyTree dualSiblingDTree = new DependencyTree();
-		dualSiblingDTree.add(SomeAbstractClass.class);
+		dualSiblingDTree.add(TestMockDaoImpl.class);
 		dualSiblingDTree.add(SomeAbstractClassImpl.class);
 
 		assertEquals("There should be two elements in the tree", 2, dualSiblingDTree.size());
@@ -95,7 +133,7 @@ public class DependencyTreeTest {
 	@Test
 	public void testAdd_parentChildElements() {
 		DependencyTree parentChildDTree = new DependencyTree();
-		parentChildDTree.add(SomeAbstractClass.class);
+		parentChildDTree.add(SomeAbstractClassImpl.class);
 		parentChildDTree.add(DependsOnSomeAbstractClass.class);
 
 		assertEquals("There should be two elements in the tree", 2, parentChildDTree.size());
@@ -108,7 +146,7 @@ public class DependencyTreeTest {
 		assertEquals("There should only be one child of the root", 1,
 				parentChildDTree.roots().iterator().next().children().size());
 
-		assertEquals("The one root's child should be the other class", SomeAbstractClass.class,
+		assertEquals("The one root's child should be the other class", SomeAbstractClassImpl.class,
 				parentChildDTree.roots().iterator().next().children().iterator().next().getDependencyClass());
 	}
 
@@ -198,94 +236,38 @@ public class DependencyTreeTest {
 	}
 
 	@Test
-	public void testAdd_circularDependency() {
+	public void testAdd_shallowCircularDependency() {
 		DependencyTree circularDTree = new DependencyTree();
 		circularDTree.add(CircularDependencyA.class);
-		circularDTree.add(CircularDependencyB.class);
-
-		assertEquals("There should be two elements in the tree", 2, circularDTree.size());
-
-		assertEquals("There should be one root", 1, circularDTree.roots().size());
+		try
+		{
+			circularDTree.add(CircularDependencyB.class);
+			fail();
+		}
+		catch (CircularDependencyException e)
+		{}
+		
+		assertTrue("Tree should be cleared after CircularDependencyException in order to avoid referential issues", 
+				circularDTree.roots().isEmpty());
 	}
 
-	// ---------------------------- //
-	// Simple Test Dependency Graph //
-	// ---------------------------- //
-	public abstract class SomeAbstractClass {
-	}
 
-	public class SomeAbstractClassImpl extends SomeAbstractClass {
-	}
 
-	@RequiredArgsConstructor
-	public class DependsOnSomeAbstractClass {
-		@Getter
-		private final SomeAbstractClass dep;
-	}
-
-	// ---------------------------- //
-	// Three Level Dependency Graph //
-	// ---------------------------- //
-	public interface ITestMockDao {
-	}
-
-	public class TestMockDaoImpl implements ITestMockDao {
-	}
-
-	@RequiredArgsConstructor
-	public class TestMockService {
-		@Getter
-		private final ITestMockDao dep;
-	}
-
-	@RequiredArgsConstructor
-	public class TestMockController {
-		@Getter
-		private final TestMockService dep;
-	}
-
-	// --------------------------- //
-	// Triangular Dependency Graph //
-	// --------------------------- //
-	public class LeafA {
-	}
-
-	public class LeafB {
-	}
-
-	@RequiredArgsConstructor
-	public class MiddleA {
-		@Getter
-		private final LeafA dep;
-	}
-
-	@RequiredArgsConstructor
-	public class MiddleB {
-		@Getter
-		private final LeafB dep;
-	}
-
-	@RequiredArgsConstructor
-	public class RootAB {
-		@Getter
-		private final MiddleA depA;
-		@Getter
-		private final MiddleB depB;
-	}
-
-	// ------------------------- //
-	// Circular Dependency Graph //
-	// ------------------------- //
-	@RequiredArgsConstructor
-	public class CircularDependencyA {
-		@Getter
-		private final CircularDependencyB dep;
-	}
-
-	@RequiredArgsConstructor
-	public class CircularDependencyB {
-		@Getter
-		private final CircularDependencyA dep;
+	@Test
+	public void testAdd_deepCircularDependency() {
+		DependencyTree circularDTree = new DependencyTree();
+		circularDTree.add(CircularDependencyX.class);
+		circularDTree.add(CircularDependencyY.class);
+		try
+		{
+			circularDTree.add(CircularDependencyZ.class);
+			fail();
+		}
+		catch (CircularDependencyException e)
+		{}
+		
+		assertTrue("Tree should be cleared after CircularDependencyException in order to avoid referential issues", 
+				circularDTree.roots().isEmpty());
 	}
 
 }
