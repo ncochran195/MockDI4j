@@ -251,8 +251,6 @@ public class DependencyTreeTest {
 				circularDTree.roots().isEmpty());
 	}
 
-
-
 	@Test
 	public void testAdd_deepCircularDependency() {
 		DependencyTree circularDTree = new DependencyTree();
@@ -269,5 +267,4 @@ public class DependencyTreeTest {
 		assertTrue("Tree should be cleared after CircularDependencyException in order to avoid referential issues", 
 				circularDTree.roots().isEmpty());
 	}
-
 }

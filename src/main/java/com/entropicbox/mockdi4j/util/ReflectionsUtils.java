@@ -3,10 +3,10 @@ package com.entropicbox.mockdi4j.util;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.reflections8.Reflections;
 import org.reflections8.scanners.ResourcesScanner;
@@ -31,7 +31,7 @@ public class ReflectionsUtils {
 				.setUrls(ClasspathHelper.forClassLoader(classLoadersList.toArray(new ClassLoader[0])))
 				.filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix(basePackageName))));
 
-		Set<Class<?>> filteredClasses = new HashSet<>();
+		Set<Class<?>> filteredClasses = ConcurrentHashMap.newKeySet();;
 		for (Class<?> clazz : reflections.getSubTypesOf(Object.class)) {
 			if (isInstantiable(clazz)) {
 				filteredClasses.add(clazz);

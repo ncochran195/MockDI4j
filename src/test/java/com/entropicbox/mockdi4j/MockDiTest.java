@@ -6,10 +6,15 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+import com.entropicbox.mockdi4j.example.controller.ExampleController;
+import com.entropicbox.mockdi4j.example.dao.IExampleDao;
+import com.entropicbox.mockdi4j.example.dao.impl.ExampleDaoImpl;
+import com.entropicbox.mockdi4j.example.service.ExampleService;
 import com.entropicbox.mockdi4j.exception.CircularDependencyException;
 import com.entropicbox.mockdi4j.exception.DependencyNotFoundException;
 import com.entropicbox.mockdi4j.exception.PackageNotFoundException;
 import com.entropicbox.mockdi4j.exception.UnsatisfiedDependencyException;
+import com.entropicbox.mockdi4j.mock.example.MockExampleDao;
 import com.entropicbox.mockdi4j.model.test.independant_dependency_graph.IndependentClassA;
 import com.entropicbox.mockdi4j.model.test.independant_dependency_graph.IndependentClassB;
 import com.entropicbox.mockdi4j.model.test.simple_dependency_graph.DependsOnSomeAbstractClass;
@@ -159,14 +164,6 @@ public class MockDiTest {
 	}
 
 	@Test
-	public void testWith_null() {
-		try {
-			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").with(null).wire();
-		} catch (NullPointerException e) {
-		}
-	}
-
-	@Test
 	public void testWith_class() {
 		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph")
 				.with(TestMockDaoImpl.class).wire();
@@ -176,11 +173,13 @@ public class MockDiTest {
 	}
 
 	@Test
-	public void testWithout_null() {
-		try {
-			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").without(null).wire();
-		} catch (NullPointerException e) {
-		}
+	public void testWith_package() {
+		MockDI mock = 
+				MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").
+				with("com.entropicbox.mockdi4j.model.test.three_level_dependency_graph").wire();
+
+		UnsatisfiedDependencyClass newlySatisfiedDependency = mock.get(UnsatisfiedDependencyClass.class);
+		assertNotNull("The dependency should be satisfied by adding the other package", newlySatisfiedDependency);
 	}
 
 	@Test
@@ -217,6 +216,22 @@ public class MockDiTest {
 	}
 
 	@Test
+	public void testWithout_package() {
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.example")
+				.without("com.entropicbox.mockdi4j.example.controller").wire();
+
+		assertNotNull(mock.get(ExampleService.class));
+		assertNotNull(mock.get(IExampleDao.class));
+		try {
+			mock.get(ExampleController.class);
+			fail();
+		} catch (DependencyNotFoundException e) {
+
+		}
+
+	}
+	
+	@Test
 	public void testReplace_nulls() {
 		try {
 			MockDI.of("com.entropicbox.mockdi4j.model.test.unsatisfied_dependency_graph").replace(null, LeafA.class)
@@ -234,9 +249,8 @@ public class MockDiTest {
 
 	@Test
 	public void testReplace_classes() {
-		MockDI mock = 
-				MockDI.of("com.entropicbox.mockdi4j.model.test.simple_dependency_graph").
-				replace(DependsOnSomeAbstractClass.class, LeafA.class).wire();
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.model.test.simple_dependency_graph")
+				.replace(DependsOnSomeAbstractClass.class, LeafA.class).wire();
 
 		try {
 			mock.get(DependsOnSomeAbstractClass.class);
@@ -247,6 +261,37 @@ public class MockDiTest {
 
 		assertNotNull(mock.get(LeafA.class));
 		assertNotNull(mock.get(SomeAbstractClass.class));
+	}
+
+	
+	@Test
+	public void testWire_multiplePackages()
+	{
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.example").wire();
+		
+		ExampleController example = mock.get(ExampleController.class);
+		assertEquals("Got data from ExampleDaoImpl", example.getExampleData());
+	}
+	
+	@Test
+	public void testWire_multiplePackages_replaceClass()
+	{
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.example")
+				.replace(ExampleDaoImpl.class, MockExampleDao.class).wire();
+		
+		ExampleController example = mock.get(ExampleController.class);
+		assertEquals("Got data from MockExampleDao", example.getExampleData());
+	}
+	
+	@Test
+	public void testWire_multiplePackages_replacePackage()
+	{
+		MockDI mock = MockDI.of("com.entropicbox.mockdi4j.example")
+				.replace("com.entropicbox.mockdi4j.example.dao.impl", 
+						"com.entropicbox.mockdi4j.mock.example").wire();
+		
+		ExampleController example = mock.get(ExampleController.class);
+		assertEquals("Got data from MockExampleDao", example.getExampleData());
 	}
 
 }
